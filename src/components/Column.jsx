@@ -5,21 +5,30 @@ import styled      from 'styled-components';
 import {Droppable} from 'react-beautiful-dnd';
 
 const Container = styled.div`
+    width: 220px;
     margin: 8px;
     border: 1px solid lightgrey;
     border-radius: 2px;
+    
+    display: flex;
+    flex-direction: column;
 `;
 const Title = styled.h3`
     padding: 8px;
+    background-color: white;
+    border-bottom:  1px solid lightgrey;
 `;
 const TaskList = styled.div`
     padding: 8px;
     transition: background-color 0.2s ease;
-    background-color: ${props => (props.isDraggingOver ? 'skyblue' : 'white')}
+    background-color: ${props => (props.isDraggingOver ? 'skyblue' : (props.isDropDisabled ? 'white' : 'lightgreen'))}
+    flex-grow: 1;
+    min-height: 100px;
+
 `;
 
 
-const Column = ({id, title, tasks}) => {
+const Column = ({id, title, tasks, isDropDisabled}) => {
 
     const renderTasks = () => {
         return tasks.map((task, index) => (
@@ -30,12 +39,18 @@ const Column = ({id, title, tasks}) => {
     return (
         <Container>
             <Title>{title}</Title>
-            <Droppable droppableId={id}>
+            <Droppable
+                droppableId={id}
+                isDropDisabled={isDropDisabled}
+                // direction="horizontal"
+                direction="vertical"
+            >
                 {(provided, snapshot) => (
                     <TaskList
                         ref={provided.innerRef}
                         {...provided.droppableProps}
                         isDraggingOver={snapshot.isDraggingOver}
+                        isDropDisabled={isDropDisabled}
                     >
                         {renderTasks()}
                         {provided.placeholder}
@@ -48,9 +63,10 @@ const Column = ({id, title, tasks}) => {
 
 
 Column.propTypes = {
-    id   : PropTypes.string.isRequired,
-    tasks: PropTypes.array.isRequired,
-    title: PropTypes.string.isRequired
-};
+  id: PropTypes.string.isRequired,
+  isDropDisabled: PropTypes.bool.isRequired,
+  tasks: PropTypes.array.isRequired,
+  title: PropTypes.string.isRequired
+}
 
 export default Column;
