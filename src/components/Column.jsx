@@ -1,8 +1,8 @@
-import React       from 'react';
-import PropTypes   from 'prop-types';
-import Task        from './Task';
-import styled      from 'styled-components';
-import {Droppable} from 'react-beautiful-dnd';
+import React from 'react';
+import PropTypes from 'prop-types';
+import Task from './Task';
+import styled from 'styled-components';
+import {Draggable, Droppable} from 'react-beautiful-dnd';
 
 const Container = styled.div`
     width: 220px;
@@ -28,7 +28,7 @@ const TaskList = styled.div`
 `;
 
 
-const Column = ({id, title, tasks, isDropDisabled}) => {
+const Column = ({id, title, tasks, draggableProvided, draggableSnapshot, isDropDisabled}) => {
 
     const renderTasks = () => {
         return tasks.map((task, index) => (
@@ -37,9 +37,15 @@ const Column = ({id, title, tasks, isDropDisabled}) => {
     };
 
     return (
-        <Container>
+        <Container
+            {...draggableProvided.draggableProps}
+            {...draggableProvided.dragHandleProps}
+            ref={draggableProvided.innerRef}
+            isDragging={draggableSnapshot.isDragging}
+        >
             <Title>{title}</Title>
             <Droppable
+                type="TASK"
                 droppableId={id}
                 isDropDisabled={isDropDisabled}
                 // direction="horizontal"
@@ -63,10 +69,12 @@ const Column = ({id, title, tasks, isDropDisabled}) => {
 
 
 Column.propTypes = {
-  id: PropTypes.string.isRequired,
-  isDropDisabled: PropTypes.bool.isRequired,
-  tasks: PropTypes.array.isRequired,
-  title: PropTypes.string.isRequired
-}
+    draggableProvided: PropTypes.any.isRequired,
+    draggableSnapshot: PropTypes.any.isRequired,
+    id: PropTypes.string.isRequired,
+    isDropDisabled: PropTypes.bool.isRequired,
+    tasks: PropTypes.array.isRequired,
+    title: PropTypes.string.isRequired
+};
 
 export default Column;

@@ -1,15 +1,19 @@
 import React, {useState, useEffect} from 'react';
 import initialData from './initial-data';
 import Column from './components/Column';
-import {DragDropContext} from 'react-beautiful-dnd';
+import {DragDropContext, Draggable, Droppable} from 'react-beautiful-dnd';
 import styled from "styled-components";
 
 
 const Container = styled.div`
     display: flex;
+    border: 1px solid lightgrey;
+    padding: 4px;
+    margin: 10px;
 `;
 
 const App = () => {
+    console.log('mounted');
     const [tasks, setTasks] = useState(initialData.tasks);
     const [columns, setColumns] = useState(initialData.columns);
     const [columnOrder, setColumnOrder] = useState(initialData.columnOrder);
@@ -35,27 +39,48 @@ const App = () => {
     }, []);
 
     const renderColumns = () => {
-        return columnOrder.map(columnId => {
+        return columnOrder.map((columnId, columnIndex) => {
+            console.log(columnId, columnIndex);
             const column = columns[columnId];
             const columnTasks = column.taskIds.map(taskId => {
                 return tasks[taskId];
             });
             const isDropDisabled = !allowedDroppable.includes(columnId);
             return (
-                <Column key={columnId}
-                        id={column.id}
-                        title={column.title}
-                        tasks={columnTasks}
-                        isDropDisabled={isDropDisabled}
-                />
+                <Draggable
+                    key={columnIndex}
+                    draggableId={columnId}
+                    index={columnIndex}
+                >
+                    {
+                        (provided, snapshot) => (
+                            <Column key={columnId}
+                                    id={column.id}
+                                    title={column.title}
+                                    tasks={columnTasks}
+                                    draggableProvided={provided}
+                                    draggableSnapshot={snapshot}
+                                    isDropDisabled={isDropDisabled}
+                            />
+                        )
+                    }
+                </Draggable>
             );
         });
     };
 
     const onDragStart = (result) => {
-        // console.log('onDragStart', result);
-        const taskId = result.draggableId;
-        setAllowedDroppable(tasks[taskId].allowedParent);
+        console.log('onDragStart', result);
+        const type = result.type;
+        switch (type.toUpperCase()) {
+            case 'TASK':
+                const taskId = result.draggableId;
+                setAllowedDroppable(tasks[taskId].allowedParent);
+                break;
+            case 'COLUMN':
+            default:
+                break;
+        }
     };
 
     const onDragUpdate = (result) => {
@@ -68,7 +93,6 @@ const App = () => {
 
         const destination = result.destination;
         const source = result.source;
-        const taskId = result.draggableId;
 
         if (!destination || (
             destination.index === source.index &&
@@ -77,11 +101,42 @@ const App = () => {
             return;
         }
 
+        const type = result.type;
+        switch (type.toUpperCase()) {
+            case 'TASK':
+                dragTask(result);
+                break;
+            case 'COLUMN':
+                dragColumn(result);
+                break;
+            default:
+                break;
+        }
+
+    };
+
+    const dragColumn = (result) => {
+        const columnId = result.draggableId;
+        const source = result.source;
+        const destination = result.destination;
+        const newColumnOrder = Array.from(columnOrder);
+        newColumnOrder.splice(source.index, 1);
+        newColumnOrder.splice(destination.index, 0, columnId);
+        setColumnOrder(newColumnOrder);
+    };
+
+    const dragTask = (result) => {
+
+        const destination = result.destination;
+        const source = result.source;
+        const taskId = result.draggableId;
+
         const newColumns = Object.assign({}, columns);
         newColumns[source.droppableId].taskIds.splice(source.index, 1);
         newColumns[destination.droppableId].taskIds.splice(destination.index, 0, taskId);
         setColumns(newColumns);
     };
+
 
     return (
         <div className="App">
@@ -91,9 +146,23 @@ const App = () => {
                     onDragStart={onDragStart}
                     onDragUpdate={onDragUpdate}
                 >
-                    <Container>
-                        {renderColumns()}
-                    </Container>
+                    <Droppable
+                        type="COLUMN"
+                        droppableId='my-column-container'
+                        direction="horizontal"
+                    >
+                        {
+                            (provided, snapshot) => (
+                                <Container
+                                    {...provided.droppableProps}
+                                    ref={provided.innerRef}
+                                >
+                                    {renderColumns()}
+                                    {provided.placeholder}
+                                </Container>
+                            )
+                        }
+                    </Droppable>
                 </DragDropContext>
             </div>
         </div>
