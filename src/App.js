@@ -1,8 +1,8 @@
-import React, {useState, useEffect} from 'react';
-import initialData from './initial-data';
-import Column from './components/Column';
-import {DragDropContext, Draggable, Droppable} from 'react-beautiful-dnd';
-import styled from "styled-components";
+import React, {useState, useEffect, useMemo} from 'react';
+import initialData                           from './initial-data';
+import Column                                from './components/Column';
+import {DragDropContext, Droppable}          from 'react-beautiful-dnd';
+import styled                                from 'styled-components';
 
 
 const Container = styled.div`
@@ -25,8 +25,8 @@ const App = () => {
             const columnIndex = (index % 3) + 1;
             const secondColumnIndex = ((columnIndex + 1) % 3) + 1;
             newTasks[`task-${index}`] = {
-                id: `task-${index}`,
-                content: `TASK ${index}`,
+                id           : `task-${index}`,
+                content      : `TASK ${index}`,
                 allowedParent: [`column-${columnIndex}`, `column-${secondColumnIndex}`]
             };
         });
@@ -34,43 +34,34 @@ const App = () => {
 
         const newColumns = Object.assign({}, columns);
         newColumns[Object.keys(newColumns)[0]].taskIds = Array.of(...Object.keys(newTasks));
-
+        setColumns(newColumns);
         // eslint-disable-next-line
     }, []);
 
     const renderColumns = () => {
         return columnOrder.map((columnId, columnIndex) => {
-            console.log(columnId, columnIndex);
             const column = columns[columnId];
             const columnTasks = column.taskIds.map(taskId => {
                 return tasks[taskId];
             });
             const isDropDisabled = !allowedDroppable.includes(columnId);
             return (
-                <Draggable
-                    key={columnIndex}
-                    draggableId={columnId}
-                    index={columnIndex}
-                >
-                    {
-                        (provided, snapshot) => (
-                            <Column key={columnId}
-                                    id={column.id}
-                                    title={column.title}
-                                    tasks={columnTasks}
-                                    draggableProvided={provided}
-                                    draggableSnapshot={snapshot}
-                                    isDropDisabled={isDropDisabled}
-                            />
-                        )
-                    }
-                </Draggable>
+                <Column key={columnId}
+                        index={columnIndex}
+                        id={column.id}
+                        title={column.title}
+                        tasks={columnTasks}
+                        isDropDisabled={isDropDisabled}
+                />
             );
         });
     };
 
+
+    const columnsList = useMemo(() => renderColumns(), [columnOrder, columns, allowedDroppable]);
+
     const onDragStart = (result) => {
-        console.log('onDragStart', result);
+        // console.log('onDragStart', result);
         const type = result.type;
         switch (type.toUpperCase()) {
             case 'TASK':
@@ -84,7 +75,7 @@ const App = () => {
     };
 
     const onDragUpdate = (result) => {
-        console.log('onDragUpdate', result);
+        // console.log('onDragUpdate', result);
     };
 
     const onDragEnd = (result) => {
@@ -152,12 +143,13 @@ const App = () => {
                         direction="horizontal"
                     >
                         {
-                            (provided, snapshot) => (
+                            (provided) => (
                                 <Container
                                     {...provided.droppableProps}
                                     ref={provided.innerRef}
                                 >
-                                    {renderColumns()}
+                                    {/*{renderColumns()}*/}
+                                    {columnsList}
                                     {provided.placeholder}
                                 </Container>
                             )

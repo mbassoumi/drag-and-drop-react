@@ -1,7 +1,7 @@
-import React from 'react';
-import PropTypes from 'prop-types';
-import Task from './Task';
-import styled from 'styled-components';
+import React, {useMemo}       from 'react';
+import PropTypes              from 'prop-types';
+import Task                   from './Task';
+import styled                 from 'styled-components';
 import {Draggable, Droppable} from 'react-beautiful-dnd';
 
 const Container = styled.div`
@@ -21,60 +21,72 @@ const Title = styled.h3`
 const TaskList = styled.div`
     padding: 8px;
     transition: background-color 0.2s ease;
-    background-color: ${props => (props.isDraggingOver ? 'skyblue' : (props.isDropDisabled ? 'white' : 'lightgreen'))}
+    background-color: ${props => (props.isDraggingOver ? 'lightyellow' : (props.isDropDisabled ? 'white' : 'lightgreen'))}
     flex-grow: 1;
     min-height: 100px;
 
 `;
 
 
-const Column = ({id, title, tasks, draggableProvided, draggableSnapshot, isDropDisabled}) => {
+const Column = ({id, title, tasks, index, isDropDisabled}) => {
 
     const renderTasks = () => {
-        return tasks.map((task, index) => (
-            <Task key={task.id} content={task.content} id={task.id} index={index}/>
+        return tasks.map((task, taskIndex) => (
+            <Task key={task.id} content={task.content} id={task.id} index={taskIndex}/>
         ))
     };
 
+    const tasksList = useMemo(() => renderTasks(), [tasks]);
+
+
     return (
-        <Container
-            {...draggableProvided.draggableProps}
-            {...draggableProvided.dragHandleProps}
-            ref={draggableProvided.innerRef}
-            isDragging={draggableSnapshot.isDragging}
+        <Draggable
+            key={id}
+            draggableId={id}
+            index={index}
         >
-            <Title>{title}</Title>
-            <Droppable
-                type="TASK"
-                droppableId={id}
-                isDropDisabled={isDropDisabled}
-                // direction="horizontal"
-                direction="vertical"
-            >
-                {(provided, snapshot) => (
-                    <TaskList
-                        ref={provided.innerRef}
-                        {...provided.droppableProps}
-                        isDraggingOver={snapshot.isDraggingOver}
-                        isDropDisabled={isDropDisabled}
+            {
+                (draggableProvided, draggableSnapshot) => (
+                    <Container
+                        {...draggableProvided.draggableProps}
+                        {...draggableProvided.dragHandleProps}
+                        ref={draggableProvided.innerRef}
+                        isDragging={draggableSnapshot.isDragging}
                     >
-                        {renderTasks()}
-                        {provided.placeholder}
-                    </TaskList>
-                )}
-            </Droppable>
-        </Container>
+                        <Title>{title}</Title>
+                        <Droppable
+                            type="TASK"
+                            droppableId={id}
+                            isDropDisabled={isDropDisabled}
+                            // direction="horizontal"
+                            direction="vertical"
+                        >
+                            {(provided, snapshot) => (
+                                <TaskList
+                                    ref={provided.innerRef}
+                                    {...provided.droppableProps}
+                                    isDraggingOver={snapshot.isDraggingOver}
+                                    isDropDisabled={isDropDisabled}
+                                >
+                                    {tasksList}
+                                    {provided.placeholder}
+                                </TaskList>
+                            )}
+                        </Droppable>
+                    </Container>
+                )
+            }
+        </Draggable>
     );
 };
 
 
 Column.propTypes = {
-    draggableProvided: PropTypes.any.isRequired,
-    draggableSnapshot: PropTypes.any.isRequired,
-    id: PropTypes.string.isRequired,
+    id            : PropTypes.string.isRequired,
+    index         : PropTypes.number.isRequired,
     isDropDisabled: PropTypes.bool.isRequired,
-    tasks: PropTypes.array.isRequired,
-    title: PropTypes.string.isRequired
+    tasks         : PropTypes.array.isRequired,
+    title         : PropTypes.string.isRequired
 };
 
 export default Column;
